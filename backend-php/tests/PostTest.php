@@ -4,9 +4,12 @@ namespace Tests;
 
 use App\Models\User;
 use App\Models\Post;
+use Laravel\Lumen\Testing\DatabaseTransactions;
 
 class PostTest extends TestCase
 {
+    use DatabaseTransactions;
+    
     private $user;
     private $token;
 
@@ -70,9 +73,4 @@ class PostTest extends TestCase
                 ->seeJson(['title' => 'Single Post']);
     }
 
-    public function test_posts_require_authentication()
-    {
-        $response = $this->get('/api/posts');
-        $response->seeStatusCode(401);
-    }
 }

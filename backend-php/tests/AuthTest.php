@@ -4,9 +4,11 @@ namespace Tests;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Lumen\Testing\DatabaseTransactions;
 
 class AuthTest extends TestCase
 {
+    use DatabaseTransactions;
     public function test_user_can_register()
     {
         $userData = [
@@ -31,7 +33,7 @@ class AuthTest extends TestCase
         $email = 'login' . uniqid() . '@example.com';
         $user = User::create([
             'email' => $email,
-            'password' => Hash::make('password123')
+            'password' => 'password123'
         ]);
 
         $response = $this->post('/api/login', [
