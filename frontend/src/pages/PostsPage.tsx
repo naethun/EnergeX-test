@@ -47,7 +47,7 @@ export const PostsPage: React.FC = () => {
     <div className="posts-page">
       <header className="posts-header">
         <div className="header-content">
-          <h1>EnergeX Posts</h1>
+          <h1>API Testing Form</h1>
           {user && (
             <div className="user-info">
               <span>Welcome, {user.email}!</span>

@@ -1,0 +1,627 @@
+openapi: 3.0.3
+info:
+  title: EnergeX API
+  description: |
+    RESTful API for EnergeX full-stack screening test built with Laravel Lumen.
+    
+    ## Authentication
+    This API uses JWT Bearer token authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your_jwt_token>
+    ```
+    
+    ## Base URLs
+    - **Lumen API**: `http://localhost:8000`
+    - **Cache Service**: `http://localhost:3001`
+    
+    ## Architecture
+    The API consists of two main services:
+    1. **Lumen Backend** - Primary API with authentication and data management
+    2. **Cache Service** - High-performance caching layer with Redis
+  version: 1.0.0
+  contact:
+    name: EnergeX API Support
+    email: support@energex.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Lumen Backend API
+  - url: http://localhost:3001
+    description: Cache Service API
+
+paths:
+  # Authentication Endpoints
+  /api/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Creates a new user account and returns JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              user_registration:
+                summary: User registration example
+                value:
+                  email: "user@example.com"
+                  password: "password123"
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: Successful registration
+                  value:
+                    access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                    token_type: "bearer"
+                    user:
+                      id: 1
+                      email: "user@example.com"
+                      created_at: "2025-01-01T00:00:00.000000Z"
+                      updated_at: "2025-01-01T00:00:00.000000Z"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+              examples:
+                email_taken:
+                  summary: Email already exists
+                  value:
+                    email: ["The email has already been taken."]
+                invalid_email:
+                  summary: Invalid email format
+                  value:
+                    email: ["The email must be a valid email address."]
+                    password: ["The password must be at least 6 characters."]
+
+  /api/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: Authenticates user credentials and returns JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              user_login:
+                summary: User login example
+                value:
+                  email: "user@example.com"
+                  password: "password123"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: Successful login
+                  value:
+                    access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+                    token_type: "bearer"
+                    user:
+                      id: 1
+                      email: "user@example.com"
+                      created_at: "2025-01-01T00:00:00.000000Z"
+                      updated_at: "2025-01-01T00:00:00.000000Z"
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_credentials:
+                  summary: Invalid login credentials
+                  value:
+                    error: "Invalid credentials"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  # Posts Endpoints
+  /api/posts:
+    get:
+      tags:
+        - Posts
+      summary: Get all posts
+      description: |
+        Retrieves all posts with user information. 
+        
+        **Caching**: Results are cached in Redis for 60 seconds for improved performance.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Posts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PostWithUser'
+              examples:
+                posts_list:
+                  summary: List of posts
+                  value:
+                    - id: 1
+                      title: "Getting Started with Laravel Lumen"
+                      content: "This is a comprehensive guide to building APIs with Laravel Lumen..."
+                      user_id: 1
+                      created_at: "2025-01-01T10:00:00.000000Z"
+                      updated_at: "2025-01-01T10:00:00.000000Z"
+                      user:
+                        id: 1
+                        email: "user@example.com"
+                    - id: 2
+                      title: "Redis Caching Strategies"
+                      content: "Learn how to implement effective caching with Redis..."
+                      user_id: 2
+                      created_at: "2025-01-01T11:00:00.000000Z"
+                      updated_at: "2025-01-01T11:00:00.000000Z"
+                      user:
+                        id: 2
+                        email: "another@example.com"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    post:
+      tags:
+        - Posts
+      summary: Create a new post
+      description: |
+        Creates a new post and associates it with the authenticated user.
+        
+        **Cache Invalidation**: Clears the cached posts list to ensure fresh data on next request.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+            examples:
+              new_post:
+                summary: Create new post
+                value:
+                  title: "Building Microservices with Docker"
+                  content: "In this post, we'll explore how to build scalable microservices using Docker containers..."
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+              examples:
+                created_post:
+                  summary: Newly created post
+                  value:
+                    id: 3
+                    title: "Building Microservices with Docker"
+                    content: "In this post, we'll explore how to build scalable microservices using Docker containers..."
+                    user_id: 1
+                    created_at: "2025-01-01T12:00:00.000000Z"
+                    updated_at: "2025-01-01T12:00:00.000000Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/posts/{id}:
+    get:
+      tags:
+        - Posts
+      summary: Get a specific post
+      description: |
+        Retrieves a single post by ID with user information.
+        
+        **Caching**: Individual posts are cached in Redis for 60 seconds.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          examples:
+            post_id:
+              summary: Post ID example
+              value: 1
+      responses:
+        '200':
+          description: Post retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostWithUser'
+              examples:
+                single_post:
+                  summary: Single post details
+                  value:
+                    id: 1
+                    title: "Getting Started with Laravel Lumen"
+                    content: "This is a comprehensive guide to building APIs with Laravel Lumen..."
+                    user_id: 1
+                    created_at: "2025-01-01T10:00:00.000000Z"
+                    updated_at: "2025-01-01T10:00:00.000000Z"
+                    user:
+                      id: 1
+                      email: "user@example.com"
+                      created_at: "2024-12-01T09:00:00.000000Z"
+                      updated_at: "2024-12-01T09:00:00.000000Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_found:
+                  summary: Post not found
+                  value:
+                    error: "Post not found"
+
+  # Cache Service Endpoints
+  /cache/posts:
+    get:
+      tags:
+        - Cache Service
+      summary: Get cached posts
+      description: |
+        Retrieves all posts from Redis cache with MySQL fallback.
+        
+        **Cache Strategy**: 
+        1. Check Redis for cached data
+        2. If cache miss, query MySQL database
+        3. Store result in Redis with 60s TTL
+        4. Return data to client
+      servers:
+        - url: http://localhost:3001
+          description: Cache Service
+      responses:
+        '200':
+          description: Posts retrieved from cache or database
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CachedPost'
+              examples:
+                cached_posts:
+                  summary: Cached posts response
+                  value:
+                    - id: 1
+                      title: "Getting Started with Laravel Lumen"
+                      content: "This is a comprehensive guide..."
+                      user_id: 1
+                      created_at: "2025-01-01T10:00:00.000Z"
+                      updated_at: "2025-01-01T10:00:00.000Z"
+
+  /cache/posts/{id}:
+    get:
+      tags:
+        - Cache Service
+      summary: Get cached post by ID
+      description: |
+        Retrieves a single post from Redis cache with MySQL fallback.
+        
+        **Cache Strategy**:
+        1. Check Redis for cached post
+        2. If cache miss, query MySQL for specific post
+        3. If found, cache with 300s TTL and return
+        4. If not found, return 404 error
+      servers:
+        - url: http://localhost:3001
+          description: Cache Service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Post retrieved from cache or database
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CachedPost'
+              examples:
+                cached_post:
+                  summary: Cached single post
+                  value:
+                    id: 1
+                    title: "Getting Started with Laravel Lumen"
+                    content: "This is a comprehensive guide..."
+                    user_id: 1
+                    created_at: "2025-01-01T10:00:00.000Z"
+                    updated_at: "2025-01-01T10:00:00.000Z"
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_found:
+                  summary: Post not found in cache or database
+                  value:
+                    message: "Not found"
+
+# Reusable Components
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT Bearer token authentication. 
+        
+        **How to obtain a token:**
+        1. Register a new account via `/api/register`
+        2. Login with credentials via `/api/login`
+        3. Use the returned `access_token` in the Authorization header
+        
+        **Token Format**: `Authorization: Bearer <your_jwt_token>`
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing_token:
+              summary: No token provided
+              value:
+                error: "Unauthorized"
+            invalid_token:
+              summary: Invalid or expired token
+              value:
+                error: "Token invalid"
+
+  schemas:
+    # Request Schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 6
+          description: User's password (minimum 6 characters)
+          example: "password123"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          description: User's password
+          example: "password123"
+
+    CreatePostRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          description: Post title
+          example: "Building Microservices with Docker"
+          maxLength: 255
+        content:
+          type: string
+          description: Post content
+          example: "In this post, we'll explore how to build scalable microservices..."
+
+    # Response Schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: User ID
+          example: 1
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2025-01-01T00:00:00.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-01-01T00:00:00.000000Z"
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Post ID
+          example: 1
+        title:
+          type: string
+          description: Post title
+          example: "Getting Started with Laravel Lumen"
+        content:
+          type: string
+          description: Post content
+          example: "This is a comprehensive guide to building APIs..."
+        user_id:
+          type: integer
+          format: int64
+          description: ID of the user who created the post
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Post creation timestamp
+          example: "2025-01-01T10:00:00.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-01-01T10:00:00.000000Z"
+
+    PostWithUser:
+      allOf:
+        - $ref: '#/components/schemas/Post'
+        - type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+
+    CachedPost:
+      type: object
+      description: Post data from cache service (without user relationship)
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Getting Started with Laravel Lumen"
+        content:
+          type: string
+          example: "This is a comprehensive guide..."
+        user_id:
+          type: integer
+          format: int64
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T10:00:00.000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-01T10:00:00.000Z"
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+        token_type:
+          type: string
+          description: Token type
+          example: "bearer"
+        user:
+          $ref: '#/components/schemas/User'
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid credentials"
+
+    ValidationError:
+      type: object
+      description: Validation error response
+      additionalProperties:
+        type: array
+        items:
+          type: string
+      example:
+        email: ["The email field is required.", "The email must be a valid email address."]
+        password: ["The password must be at least 6 characters."]
+
+tags:
+  - name: Authentication
+    description: |
+      User authentication and registration endpoints.
+      
+      **JWT Token Lifecycle:**
+      - Tokens are valid for 60 minutes (configurable)
+      - Include token in Authorization header for protected routes
+      - Tokens automatically refresh on valid requests
+  
+  - name: Posts
+    description: |
+      Post management endpoints with Redis caching.
+      
+      **Caching Strategy:**
+      - GET requests utilize Redis cache for improved performance
+      - Cache TTL: 60 seconds for posts list, 60 seconds for individual posts
+      - Cache automatically invalidated when new posts are created
+  
+  - name: Cache Service
+    description: |
+      High-performance caching service endpoints.
+      
+      **Architecture:**
+      - Node.js Express service with TypeScript
+      - Redis-first caching with MySQL fallback
+      - Optimized for read-heavy workloads
