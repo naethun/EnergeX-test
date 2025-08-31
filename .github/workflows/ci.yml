@@ -37,6 +37,14 @@ jobs:
           REDIS_HOST: 127.0.0.1
       - run: ./vendor/bin/phpunit
         working-directory: backend-php
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: app
+          DB_USERNAME: app
+          DB_PASSWORD: app
+          JWT_SECRET: test-secret-key-for-jwt-testing-only-not-for-production
       # Node tests
       - uses: actions/setup-node@v4
         with: { node-version: '20' }

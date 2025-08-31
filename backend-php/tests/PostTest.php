@@ -15,7 +15,7 @@ class PostTest extends TestCase
         parent::setUp();
         
         $this->user = User::create([
-            'email' => 'testuser@example.com',
+            'email' => 'testuser' . uniqid() . '@example.com',
             'password' => 'password123'
         ]);
         

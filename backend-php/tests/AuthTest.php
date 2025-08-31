@@ -10,7 +10,7 @@ class AuthTest extends TestCase
     public function test_user_can_register()
     {
         $userData = [
-            'email' => 'test@example.com',
+            'email' => 'test' . uniqid() . '@example.com',
             'password' => 'password123'
         ];
 
@@ -23,18 +23,19 @@ class AuthTest extends TestCase
                     'user' => ['id', 'email']
                 ]);
 
-        $this->seeInDatabase('users', ['email' => 'test@example.com']);
+        $this->seeInDatabase('users', ['email' => $userData['email']]);
     }
 
     public function test_user_can_login()
     {
+        $email = 'login' . uniqid() . '@example.com';
         $user = User::create([
-            'email' => 'login@example.com',
+            'email' => $email,
             'password' => Hash::make('password123')
         ]);
 
         $response = $this->post('/api/login', [
-            'email' => 'login@example.com',
+            'email' => $email,
             'password' => 'password123'
         ]);
 
