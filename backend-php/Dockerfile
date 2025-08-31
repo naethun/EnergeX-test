@@ -38,9 +38,11 @@ COPY . .
 # Ensure .env file exists and has correct content
 RUN if [ ! -f .env ]; then cp .env.example .env; fi
 
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+# Create storage directories and set permissions
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod -R 777 storage
 
 # Expose port
 EXPOSE 8000

@@ -33,6 +33,7 @@ app.get('/cache/posts/:id', async (req,res)=>{
     await redis.set(key, data, 'EX', 300);
   }
   res.json(JSON.parse(data));
+  console.log(JSON.parse(data))
 });
 
 const PORT = process.env.PORT || 3001;

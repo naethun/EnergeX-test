@@ -62,6 +62,7 @@ $app->singleton(
 $app->configure('app');
 $app->configure('auth');
 $app->configure('jwt');
+$app->configure('logging');
 $app->register(PHPOpenSourceSaver\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
 $app->configure('database');
@@ -77,9 +78,9 @@ $app->configure('database');
 |
 */
 
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
+$app->middleware([
+    App\Http\Middleware\RequestLoggingMiddleware::class
+]);
 
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
