@@ -2,6 +2,11 @@
 
 Simple full-stack application built with Laravel Lumen (PHP), Node.js (TypeScript), React, Redis caching, and MySQL database, fully containerized with Docker and automated CI pipeline.
 
+## Demo Video
+
+https://github.com/user-attachments/assets/0c7b0326-1ed1-4b36-b114-d67f01367b19
+
+
 ## Architecture Overview
 
 ```
