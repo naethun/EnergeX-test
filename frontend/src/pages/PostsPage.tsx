@@ -50,7 +50,7 @@ export const PostsPage: React.FC = () => {
           <h1>EnergeX Posts</h1>
           {user && (
             <div className="user-info">
-              <span>Welcome, {user.name}!</span>
+              <span>Welcome, {user.email}!</span>
               <button onClick={handleLogout} className="logout-button">
                 Logout
               </button>

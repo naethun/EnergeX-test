@@ -9,21 +9,44 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
+        $this->validate($request, [
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:6'
+        ]);
+
         $user = User::create([
             'email' => $request->email,
             'password' => $request->password
         ]);
 
-        return response()->json(['user' => $user], 201);
+        $token = auth()->login($user);
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'user' => $user
+        ], 201);
     }
 
     public function login(Request $request)
     {
-        $email = $request->email;
-        $password = $request->password;
+        $this->validate($request, [
+            'email' => 'required|email',
+            'password' => 'required|string'
+        ]);
 
-        $token = auth()->attempt(['email' => $email, 'password' => $password]);
+        $credentials = $request->only(['email', 'password']);
         
-        return response()->json(['token' => $token]);
+        $token = auth()->attempt($credentials);
+        
+        if (!$token) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+        
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'user' => auth()->user()
+        ]);
     }
 }
