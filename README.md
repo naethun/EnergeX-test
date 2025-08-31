@@ -1,6 +1,6 @@
 # EnergeX - Full-Stack Microservice API
 
-Simple full-stack application built with Laravel Lumen (PHP), Node.js (TypeScript), React, Redis caching, and MySQL database, fully containerized with Docker and automated CI pipeline.
+Simple full-stack application built with Laravel Lumen (PHP), Node.js (TypeScript), React, Redis caching, real-time updates through Socket.io and MySQL database, fully containerized with Docker and automated CI pipeline.
 
 ## Demo Video
 
