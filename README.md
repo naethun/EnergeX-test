@@ -207,6 +207,7 @@ cd cache-node && npm test
 - Parallel test execution where possible
 
 ## API Documentation
+- https://app.swaggerhub.com/apis/energe/EnergeXAI-API/1.0.0
 
 ### Authentication Endpoints
 
