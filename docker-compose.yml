@@ -1,0 +1,13 @@
+# docker-compose.yml (first pass)
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+    ports: ["3306:3306"]
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
