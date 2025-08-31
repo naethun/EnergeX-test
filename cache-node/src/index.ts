@@ -35,4 +35,10 @@ app.get('/cache/posts/:id', async (req,res)=>{
   res.json(JSON.parse(data));
 });
 
-app.listen(process.env.PORT || 3001, ()=> console.log('cache-node up'));
+const PORT = process.env.PORT || 3001;
+
+if (require.main === module) {
+  app.listen(PORT, () => console.log('cache-node up'));
+}
+
+export default app;
