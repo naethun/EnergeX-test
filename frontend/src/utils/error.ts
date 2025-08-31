@@ -13,5 +13,5 @@ export function getApiError(err: unknown): string {
     }
   }
   
-  return 'An error occurred';
+  return 'An error occured, please make sure your password is 6 characters long';
 }
