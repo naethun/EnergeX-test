@@ -1,8 +1,18 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import Redis from 'ioredis';
 import mysql from 'mysql2/promise';
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
+});
+
 const redis = new Redis({ host: process.env.REDIS_HOST || '127.0.0.1' });
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '127.0.0.1',
@@ -36,10 +46,33 @@ app.get('/cache/posts/:id', async (req,res)=>{
   console.log(JSON.parse(data))
 });
 
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+app.post('/webhook/post-created', express.json(), (req, res) => {
+  const post = req.body;
+  io.emit('post-created', post);
+  redis.del('posts:all');
+  res.status(200).json({ success: true });
+});
+
+app.post('/webhook/post-updated', express.json(), (req, res) => {
+  const post = req.body;
+  io.emit('post-updated', post);
+  redis.del('posts:all');
+  redis.del(`posts:${post.id}`);
+  res.status(200).json({ success: true });
+});
+
 const PORT = process.env.PORT || 3001;
 
 if (require.main === module) {
-  app.listen(PORT, () => console.log('cache-node up'));
+  httpServer.listen(PORT, () => console.log('cache-node with socket.io up'));
 }
 
 export default app;

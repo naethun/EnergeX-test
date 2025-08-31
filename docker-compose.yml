@@ -19,9 +19,12 @@ services:
   backend-php:
     build: ./backend-php
     env_file: ./backend-php/.env
+    environment:
+      WEBSOCKET_URL: http://cache-node:3001
     depends_on:
       - db
       - redis
+      - cache-node
     ports:
       - "8000:8000"
 

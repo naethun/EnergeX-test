@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Post } from '../types';
 import { postsAPI } from '../utils/api';
+import { socketManager } from '../utils/socket';
 
 interface PostListProps {
   refreshTrigger: number;
@@ -28,6 +29,31 @@ export const PostList: React.FC<PostListProps> = ({ refreshTrigger }) => {
   useEffect(() => {
     loadPosts();
   }, [refreshTrigger]);
+
+  useEffect(() => {
+    socketManager.connect();
+
+    const handlePostCreated = (newPost: unknown) => {
+      setPosts(prevPosts => [newPost as Post, ...prevPosts]);
+    };
+
+    const handlePostUpdated = (updatedPost: unknown) => {
+      const post = updatedPost as Post;
+      setPosts(prevPosts => 
+        prevPosts.map(p => 
+          p.id === post.id ? post : p
+        )
+      );
+    };
+
+    socketManager.on('post-created', handlePostCreated);
+    socketManager.on('post-updated', handlePostUpdated);
+
+    return () => {
+      socketManager.off('post-created', handlePostCreated);
+      socketManager.off('post-updated', handlePostUpdated);
+    };
+  }, []);
 
   if (isLoading) {
     return <div className="loading">Loading posts...</div>;

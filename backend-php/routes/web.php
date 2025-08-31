@@ -29,6 +29,7 @@ $router->group(['middleware' => 'cors'], function() use ($router){
     $router->get('/api/posts','PostController@index');        // cached
     $router->post('/api/posts','PostController@store');
     $router->get('/api/posts/{id}','PostController@show');    // cached
+    $router->put('/api/posts/{id}','PostController@update');
   });
 });
 
