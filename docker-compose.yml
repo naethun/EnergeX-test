@@ -18,17 +18,7 @@ services:
 
   backend-php:
     build: ./backend-php
-    environment:
-      DB_CONNECTION: mysql
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: app
-      DB_USERNAME: app
-      DB_PASSWORD: app
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      APP_ENV: local
-      APP_DEBUG: true
+    env_file: ./backend-php/.env
     depends_on:
       - db
       - redis
@@ -52,7 +42,7 @@ services:
   frontend:
     build: ./frontend
     environment:
-      VITE_API_BASE: http://localhost:8000
+      VITE_API_BASE: http://127.0.0.1:8000
     depends_on:
       - backend-php
     ports:
