@@ -12,6 +12,10 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
+
+$router->get('/', function () use ($router) {
+    return $router->app->version();
+});
 // Handle all OPTIONS requests first (no auth required)
 $router->group(['middleware' => 'cors'], function() use ($router){
   $router->options('/api/{any:.*}', function() { return response('', 200); });
