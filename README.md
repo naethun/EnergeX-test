@@ -190,7 +190,7 @@ cd cache-node && npm test
 - Health checks and service dependencies
 - Volume persistence for MySQL data
 
-### ✅ CI/CD Pipeline
+### ✅ CI Pipeline
 
 **Implementation Location:** `.github/workflows/ci.yml`
 
