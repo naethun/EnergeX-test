@@ -1,35 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { authStore } from './stores/authStore'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+import { PostsPage } from './pages/PostsPage'
 import './App.css'
 
 function App() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [isAuthenticated, setIsAuthenticated] = useState(authStore.isLoggedIn())
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    alert(`Email: ${email}\nPassword: ${password}`)
-  }
+  useEffect(() => {
+    const unsubscribe = authStore.subscribe(() => {
+      const authState = authStore.isLoggedIn()
+      setIsAuthenticated(authState)
+    })
+
+    return unsubscribe
+  }, [])
 
   return (
-    <div className="login-container">
-      <h1>EnergeX API Consumer</h1>
-      <form onSubmit={handleSubmit} className="login-form">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Login</button>
-      </form>
+    <div className="app">
+      <Routes>
+        <Route path="/login" element={
+          isAuthenticated ? <Navigate to="/posts" replace /> : <LoginPage />
+        } />
+        <Route path="/register" element={
+          isAuthenticated ? <Navigate to="/posts" replace /> : <RegisterPage />
+        } />
+        <Route path="/posts" element={
+          isAuthenticated ? <PostsPage /> : <Navigate to="/login" replace />
+        } />
+        <Route path="/" element={<Navigate to={isAuthenticated ? "/posts" : "/login"} replace />} />
+      </Routes>
     </div>
   )
 }
